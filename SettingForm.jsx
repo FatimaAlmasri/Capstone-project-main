@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { profileSchema } from './profileSchema.js';
 import './SettingForm.css';
 
 const defaultProfile = {
 	name: 'Alex Morgan',
-	username: 'alexmorgan',
 	email: 'alex@example.com',
 	bio: 'Product designer turning complex problems into simple, thoughtful experiences.',
 };
@@ -18,24 +20,40 @@ function getInitials(name) {
 }
 
 export default function SettingForm({ initialProfile = defaultProfile, onSave }) {
-	const [profile, setProfile] = useState(() => ({ ...defaultProfile, ...initialProfile }));
 	const [saved, setSaved] = useState(false);
+	const [saveError, setSaveError] = useState('');
+	const {
+		register,
+		handleSubmit,
+		reset,
+		watch,
+		formState: { errors, isSubmitting },
+	} = useForm({
+		defaultValues: { ...defaultProfile, ...initialProfile },
+		mode: 'onBlur',
+		reValidateMode: 'onChange',
+		resolver: zodResolver(profileSchema),
+		shouldFocusError: true,
+	});
+	const name = watch('name') ?? '';
+	const bio = watch('bio') ?? '';
 
-	function updateField(event) {
-		const { name, value } = event.target;
-		setProfile((currentProfile) => ({ ...currentProfile, [name]: value }));
+	async function saveProfile(profile) {
 		setSaved(false);
+		setSaveError('');
+
+		try {
+			await onSave?.(profile);
+			setSaved(true);
+		} catch {
+			setSaveError('Your profile could not be saved. Please try again.');
+		}
 	}
 
-	function handleSubmit(event) {
-		event.preventDefault();
-		onSave?.(profile);
-		setSaved(true);
-	}
-
-	function handleReset() {
-		setProfile({ ...defaultProfile, ...initialProfile });
+	function discardChanges() {
+		reset({ ...defaultProfile, ...initialProfile });
 		setSaved(false);
+		setSaveError('');
 	}
 
 	return (
@@ -47,94 +65,83 @@ export default function SettingForm({ initialProfile = defaultProfile, onSave })
 					<p className="profile-settings__description">
 						Keep your personal details current so people know who they’re working with.
 					</p>
-					<div className="profile-settings__identity">
+					<div className="profile-settings__identity" aria-label="Profile preview">
 						<div className="profile-settings__avatar" aria-hidden="true">
-							{getInitials(profile.name) || 'U'}
+							{getInitials(name) || 'U'}
 						</div>
-						<div>
-							<p className="profile-settings__identity-name">{profile.name || 'Your name'}</p>
-							<p className="profile-settings__identity-handle">@{profile.username || 'username'}</p>
-						</div>
+						<p className="profile-settings__identity-name">{name || 'Your name'}</p>
 					</div>
 				</header>
 
-				<form className="profile-form" onSubmit={handleSubmit}>
+				<form className="profile-form" noValidate onSubmit={handleSubmit(saveProfile)}>
 					<div className="profile-form__heading">
 						<div>
 							<h2>Personal information</h2>
 							<p>Update the details associated with your profile.</p>
 						</div>
-						<span className="profile-form__required-note">* Required</span>
+						<span className="profile-form__required-note">
+							<span aria-hidden="true">*</span> Required
+						</span>
 					</div>
 
 					<div className="profile-form__fields">
-						<label className="profile-form__field" htmlFor="profile-name">
-							<span>Full name <span aria-hidden="true">*</span></span>
+						<div className="profile-form__field">
+							<label htmlFor="profile-name">Full name <span aria-hidden="true">*</span></label>
 							<input
+								{...register('name', { onChange: () => { setSaved(false); setSaveError(''); } })}
+								aria-describedby={errors.name ? 'profile-name-error' : undefined}
+								aria-invalid={errors.name ? 'true' : 'false'}
 								autoComplete="name"
 								id="profile-name"
-								name="name"
-								onChange={updateField}
-								required
-								value={profile.name}
+								maxLength={80}
+								aria-required="true"
 							/>
-						</label>
+							{errors.name && <p className="profile-form__error" id="profile-name-error" role="alert">{errors.name.message}</p>}
+						</div>
 
-						<label className="profile-form__field" htmlFor="profile-username">
-							<span>Username <span aria-hidden="true">*</span></span>
-							<div className="profile-form__input-prefix">
-								<span aria-hidden="true">@</span>
-								<input
-									autoComplete="username"
-									id="profile-username"
-									name="username"
-									onChange={updateField}
-									pattern="[A-Za-z0-9_]{3,20}"
-									required
-									title="Use 3–20 letters, numbers, or underscores."
-									value={profile.username}
-								/>
-							</div>
-							<small>3–20 characters. Letters, numbers, and underscores only.</small>
-						</label>
-
-						<label className="profile-form__field" htmlFor="profile-email">
-							<span>Email address <span aria-hidden="true">*</span></span>
+						<div className="profile-form__field">
+							<label htmlFor="profile-email">Email address <span aria-hidden="true">*</span></label>
 							<input
+								{...register('email', { onChange: () => { setSaved(false); setSaveError(''); } })}
+								aria-describedby={errors.email ? 'profile-email-error' : undefined}
+								aria-invalid={errors.email ? 'true' : 'false'}
 								autoComplete="email"
 								id="profile-email"
-								name="email"
-								onChange={updateField}
-								required
-								type="email"
-								value={profile.email}
+								maxLength={254}
+								aria-required="true"
 							/>
-						</label>
+							{errors.email && <p className="profile-form__error" id="profile-email-error" role="alert">{errors.email.message}</p>}
+						</div>
 
-						<label className="profile-form__field" htmlFor="profile-bio">
-							<span>About you</span>
+						<div className="profile-form__field profile-form__field--bio">
+							<label htmlFor="profile-bio">Short bio <span className="profile-form__optional">(optional)</span></label>
 							<textarea
+								{...register('bio', { onChange: () => { setSaved(false); setSaveError(''); } })}
+								aria-describedby={`profile-bio-hint profile-bio-count${errors.bio ? ' profile-bio-error' : ''}`}
+								aria-invalid={errors.bio ? 'true' : 'false'}
 								id="profile-bio"
-								maxLength={180}
-								name="bio"
-								onChange={updateField}
+								maxLength={160}
 								rows={4}
-								value={profile.bio}
 							/>
-							<small className="profile-form__counter">{profile.bio.length}/180</small>
-						</label>
+							<div className="profile-form__bio-meta">
+								<small id="profile-bio-hint">Share a little about yourself. 160 characters maximum.</small>
+								<small id="profile-bio-count" aria-live="polite">{bio.length}/160</small>
+							</div>
+							{errors.bio && <p className="profile-form__error" id="profile-bio-error" role="alert">{errors.bio.message}</p>}
+						</div>
 					</div>
 
 					<div className="profile-form__footer">
-						<p className="profile-form__status" aria-live="polite">
-							{saved ? 'Your profile has been saved.' : ''}
-						</p>
+						<div className="profile-form__messages" aria-live="polite">
+							{saved && <p className="profile-form__status">Your profile has been saved.</p>}
+							{saveError && <p className="profile-form__error" role="alert">{saveError}</p>}
+						</div>
 						<div className="profile-form__actions">
-							<button className="profile-form__reset" onClick={handleReset} type="button">
+							<button className="profile-form__reset" onClick={discardChanges} type="button" disabled={isSubmitting}>
 								Discard changes
 							</button>
-							<button className="profile-form__submit" type="submit">
-								Save changes <span aria-hidden="true">↗</span>
+							<button className="profile-form__submit" type="submit" disabled={isSubmitting}>
+								{isSubmitting ? 'Saving…' : 'Save changes'}
 							</button>
 						</div>
 					</div>
