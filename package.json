@@ -1,0 +1,14 @@
+{
+	"name": "capstone-profile-settings",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"test": "node --test profileSchema.test.js"
+	},
+	"dependencies": {
+		"@hookform/resolvers": "^5.2.0",
+		"react": "^19.1.0",
+		"react-hook-form": "^7.62.0",
+		"zod": "^3.25.0"
+	}
+}

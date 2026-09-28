@@ -123,7 +123,7 @@
 
 .profile-form__required-note {
   flex: 0 0 auto;
-  color: #758078;
+  color: #59665f;
   font-size: 11px;
 }
 
@@ -144,8 +144,14 @@
   font-weight: 600;
 }
 
-.profile-form__field > span > span {
+.profile-form__field label > span {
   color: #ad5d40;
+}
+
+.profile-form__optional {
+  color: #59665f !important;
+  font-size: 11px;
+  font-weight: 400;
 }
 
 .profile-form__field input,
@@ -181,38 +187,45 @@
   box-shadow: 0 0 0 3px rgb(73 107 88 / 12%);
 }
 
-.profile-form__input-prefix {
-  position: relative;
+.profile-form__field input[aria-invalid="true"],
+.profile-form__field textarea[aria-invalid="true"] {
+  border-color: #a33723;
 }
 
-.profile-form__input-prefix > span {
-  position: absolute;
-  top: 50%;
-  left: 12px;
-  color: #87938a;
-  font-size: 14px;
-  font-weight: 400;
-  transform: translateY(-50%);
-}
-
-.profile-form__input-prefix input {
-  padding-left: 29px;
+.profile-form__field input:focus-visible,
+.profile-form__field textarea:focus-visible {
+  outline: 2px solid #355b47;
+  outline-offset: 2px;
 }
 
 .profile-form__field small {
-  color: #7a867e;
+  color: #59665f;
   font-size: 11px;
   font-weight: 400;
   line-height: 1.5;
 }
 
-.profile-form__field:nth-child(n + 3) {
+.profile-form__field--bio {
   grid-column: 1 / -1;
 }
 
-.profile-form__counter {
-  align-self: flex-end;
-  margin-top: -3px;
+.profile-form__bio-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.profile-form__bio-meta small:last-child {
+  flex: 0 0 auto;
+}
+
+.profile-form__error {
+  margin: 0;
+  color: #9c321f;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
 }
 
 .profile-form__footer {
@@ -230,6 +243,10 @@
   margin: 0;
   color: #496b58;
   font-size: 12px;
+}
+
+.profile-form__messages {
+  min-width: 0;
 }
 
 .profile-form__actions {
@@ -250,6 +267,16 @@
   font-weight: 600;
   cursor: pointer;
   transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+.profile-form__actions button:focus-visible {
+  outline: 2px solid #355b47;
+  outline-offset: 3px;
+}
+
+.profile-form__actions button:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 
 .profile-form__reset {
@@ -312,7 +339,7 @@
     grid-template-columns: 1fr;
   }
 
-  .profile-form__field:nth-child(n + 3) {
+  .profile-form__field--bio {
     grid-column: auto;
   }
 
@@ -327,5 +354,14 @@
 
   .profile-form__actions button {
     flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }
